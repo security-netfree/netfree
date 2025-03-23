@@ -1,18 +1,83 @@
 <!DOCTYPE html>
-<html lang="he-IL" dir="rtl">
+<html lang="he" dir="rtl">
 <head>
-	<meta charset="utf-8" />
-	<title>דוד חזן</title>
-	<meta name="description" content="חנות אפליקציות כשרה" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="format-detection" content="telephone=no" />
-	<link rel="shortcut icon" href="https://github.com/yitzhakapps/yitzhakapps.github.io/blob/main/ICON/storshkoof.png?raw=true"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>הורדת תעודות אבטחה</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'SamsungOne', 'Segoe UI', sans-serif;
+      background-color: #f4f5f7;
+      color: #1c1c1e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
 
+    .header {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 1em;
+      color: #444;
+      text-align: center;
+      max-width: 90%;
+      margin-bottom: 30px;
+    }
+
+    .button-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .download-button {
+      background-color: #6c5ce7;
+      color: white;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1em;
+      font-weight: 500;
+      text-align: center;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .download-button:hover {
+      background-color: #5a4bd9;
+    }
+
+    @media (max-width: 400px) {
+      .download-button {
+        font-size: 0.95em;
+        padding: 12px;
+      }
+    }
+  </style>
 </head>
+<body>
 
-<video autoplay muted loop id="myVideo">
-    <source src="https://cdna.streamgates.net/kol_barama/KoPlay/backgroundVideo1.mp4" type="video/mp4">
-    Your browser does not support HTML5 video.
-</video>
+  <div class="header">הורדת תעודות אבטחה</div>
 
+  <div class="description">
+    על מנת לאפשר חיבור מאובטח ושימוש תקין באפליקציות, יש להוריד ולהתקין את חמשת תעודות האבטחה הבאות. כל לחיצה תוריד קובץ נפרד.
+  </div>
+
+  <div class="button-container">
+    <a class="download-button" href="cert1.cer" download>הורד תעודה 1</a>
+    <a class="download-button" href="cert2.cer" download>הורד תעודה 2</a>
+    <a class="download-button" href="cert3.cer" download>הורד תעודה 3</a>
+    <a class="download-button" href="cert4.cer" download>הורד תעודה 4</a>
+    <a class="download-button" href="cert5.cer" download>הורד תעודה 5</a>
+  </div>
+
+</body>
 </html>
