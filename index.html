@@ -77,7 +77,6 @@
         text-align: right; border-right: 10px solid #d4a373;
         background-image: linear-gradient(#e1e1e1 1px, transparent 1px);
         background-size: 100% 2.2rem;
-        /* הפעלת האנימציה */
         animation: envelopeOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
@@ -89,6 +88,7 @@
     }
     .close-btn:hover { background: #d9534f; color: white; }
 
+    .letter-title { font-size: 1.8rem; font-weight: bold; color: #d4a373; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
     .letter-body { font-size: 1.3rem; line-height: 2.2rem; color: #2c3e50; font-family: 'Segoe UI', serif; }
     .blurred { filter: blur(10px); user-select: none; pointer-events: none; opacity: 0.4; }
 
@@ -99,6 +99,16 @@
         width: 80%; text-align: center; z-index: 10;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
+
+    /* כפתורי בחירת מכתב */
+    .selection-container { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+    .select-btn {
+        padding: 15px 30px; font-size: 20px; font-weight: bold; border: none; border-radius: 10px;
+        cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .btn-david { background: #d4a373; color: white; }
+    .btn-tehila { background: #e07a5f; color: white; }
+    .select-btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
 
     /* ספירה לאחור */
     .countdown {
@@ -127,15 +137,30 @@
 <div class="modal-overlay" id="modalOverlay" onclick="closeLetter()">
     <div class="modal-content" id="modalContent" onclick="event.stopPropagation()">
         <button class="close-btn" onclick="closeLetter()">&times;</button>
-        <div id="lockedMessage" class="locked-msg" style="display:none;">🔒 עוד לא הגיע הזמן לפתוח את המכתב!</div>
-        <div id="letterText" class="letter-body"></div>
+        <div id="lockedMessage" class="locked-msg" style="display:none;">🔒 עוד לא הגיע הזמן לפתוח את המכתבים!</div>
+        <div id="selectionMode">
+            <h2 style="color:#d4a373">בחר/י מכתב לקריאה:</h2>
+            <div class="selection-container">
+                <button class="select-btn btn-david" onclick="showSpecificLetter('david')">דוד</button>
+                <button class="select-btn btn-tehila" onclick="showSpecificLetter('tehila')">תהילה</button>
+            </div>
+        </div>
+        <div id="letterView" style="display:none;">
+            <div id="letterTitle" class="letter-title"></div>
+            <div id="letterText" class="letter-body"></div>
+            <button onclick="backToSelection()" style="margin-top:20px; background:none; border:none; color:#888; cursor:pointer; text-decoration:underline;">חזרה לבחירה</button>
+        </div>
     </div>
 </div>
 
 <script>
-let lettersData = {};
+let davidLetters = {};
+let tehilaLetters = {};
+let currentActiveId = null;
 
-// 1. הגדרות קבועות
+const davidUrl = 'https://docs.google.com/document/d/12bcJIg6WUSwJzMR1DxpQSWq63zyb8a_0sGPrEZE9YfE/export?format=txt'; 
+const tehilaUrl = 'https://docs.google.com/document/d/12bcJIg6WUSwJzMR1DxpQSWq63zyb8a_0sGPrEZE9YfE/export?format=txt'; // <--- שים כאן את הכתובת של תהילה
+
 const startDate = new Date(2025, 11, 21); 
 const weddingDate = new Date(2026, 2, 1, 19, 0, 0); 
 const today = new Date();
@@ -145,22 +170,18 @@ const grid = document.getElementById("calendarGrid");
 const monthFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {month: "long"});
 const dayNumFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {day: "numeric"});
 
-// 2. טעינת הנתונים ורק אז בניית הלוח
-const remoteJsonUrl = 'https://docs.google.com/document/d/12bcJIg6WUSwJzMR1DxpQSWq63zyb8a_0sGPrEZE9YfE/export?format=txt'; // <--- שים כאן את הכתובת המלאה
-
-fetch(remoteJsonUrl)
-    .then(res => {
-        if (!res.ok) throw new Error("לא מצליח למשוך את הקובץ מהשרת");
-        return res.json();
-    })
-    .then(data => {
-        lettersData = data;
-        init(); 
-    })
-    .catch(err => {
-        console.error("שגיאה בטעינה מהשרת:", err);
-        init(); // טוען את הלוח ריק כדי שהדף לא ייתקע
-    });
+// טעינת שני הקבצים
+Promise.all([
+    fetch(davidUrl).then(res => res.json()).catch(() => ({})),
+    fetch(tehilaUrl).then(res => res.json()).catch(() => ({}))
+]).then(([davidData, tehilaData]) => {
+    davidLetters = davidData;
+    tehilaLetters = tehilaData;
+    init();
+}).catch(err => {
+    console.error("שגיאה בטעינה:", err);
+    init();
+});
 
 function init() {
     buildCalendar();
@@ -182,77 +203,84 @@ function toGematria(num) {
 function buildCalendar() {
     let current = new Date(startDate);
     grid.innerHTML = "";
-
-    // יצירת רווחים לתחילת שבוע
     for (let i = 0; i < startDate.getDay(); i++) {
         const empty = document.createElement("div");
         empty.className = "day";
         empty.style.background = "rgba(0,0,0,0.05)";
         grid.appendChild(empty);
     }
-
     while (current <= weddingDate) {
         const cell = document.createElement("div");
         const dateKey = current.toDateString();
-        
-        // יצירת ID תקין להתאמה ל-JSON
         const year = current.getFullYear();
         const month = String(current.getMonth() + 1).padStart(2, '0');
         const day = String(current.getDate()).padStart(2, '0');
         const dateId = `${year}-${month}-${day}`;
-
         const isToday = current.getTime() === today.getTime();
         const isPast = current < today;
         const isFuture = current > today;
-
         let classes = ["day"];
         if (isToday) classes.push("today");
         if (isPast && !isToday) classes.push("past-day");
         if (current.getFullYear() === 2026 && current.getMonth() === 2 && current.getDate() === 1) classes.push("wedding-day");
         cell.className = classes.join(" ");
-
         const hebDay = toGematria(parseInt(dayNumFormatter.format(current)));
         const hebMonth = monthFormatter.format(current);
-        
         cell.innerHTML = `
             <div class="hebrew">${hebDay} ${hebMonth}</div>
             <div class="gregorian">${current.getDate()}.${current.getMonth()+1}.${current.getFullYear()}</div>
-            <button class="open-letter-btn">💌</button>
+            <button class="open-letter-btn">❤️</button>
             <textarea class="note-input" placeholder="הערה..." oninput="localStorage.setItem('${dateKey}', this.value)">${localStorage.getItem(dateKey) || ""}</textarea>
         `;
-
         cell.querySelector('.open-letter-btn').onclick = (e) => {
             e.stopPropagation();
-            openLetter(dateId, isFuture);
+            openSelection(dateId, isFuture);
         };
-
         grid.appendChild(cell);
         current.setDate(current.getDate() + 1);
     }
 }
 
-function openLetter(id, isLocked) {
+function openSelection(id, isLocked) {
+    currentActiveId = id;
     const overlay = document.getElementById('modalOverlay');
-    const content = document.getElementById('modalContent');
-    const textDiv = document.getElementById('letterText');
     const lockMsg = document.getElementById('lockedMessage');
-
-    // שליפת הטקסט מהמילון שנטען
-    textDiv.innerText = lettersData[id] || "כאן יופיע המכתב האישי שלכם...\nמזל טוב!";
-    
-    content.style.animation = 'none';
-    content.offsetHeight; 
-    content.style.animation = null;
+    const selection = document.getElementById('selectionMode');
+    const letterView = document.getElementById('letterView');
 
     overlay.style.display = 'flex';
-
+    
     if (isLocked) {
-        textDiv.classList.add('blurred');
+        selection.classList.add('blurred');
+        letterView.classList.add('blurred');
         lockMsg.style.display = 'block';
     } else {
-        textDiv.classList.remove('blurred');
+        selection.classList.remove('blurred');
+        letterView.classList.remove('blurred');
         lockMsg.style.display = 'none';
     }
+    backToSelection();
+}
+
+function showSpecificLetter(who) {
+    document.getElementById('selectionMode').style.display = 'none';
+    const view = document.getElementById('letterView');
+    const title = document.getElementById('letterTitle');
+    const text = document.getElementById('letterText');
+    
+    view.style.display = 'block';
+    if(who === 'david') {
+        title.innerText = 'מכתב מדוד';
+        text.innerText = davidLetters[currentActiveId] || "כאן יופיע המכתב האישי של דוד...";
+    } else {
+        title.innerText = 'מכתב מתהילה';
+        text.innerText = tehilaLetters[currentActiveId] || "כאן יופיע המכתב האישי של תהילה...";
+    }
+}
+
+function backToSelection() {
+    document.getElementById('selectionMode').style.display = 'block';
+    document.getElementById('letterView').style.display = 'none';
 }
 
 function closeLetter() {
@@ -283,8 +311,5 @@ function updateCountdown() {
     `;
 }
 </script>
-
-
 </body>
 </html>
-
