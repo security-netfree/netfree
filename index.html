@@ -146,7 +146,7 @@ const monthFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {month: "long"}
 const dayNumFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {day: "numeric"});
 
 // 2. טעינת הנתונים ורק אז בניית הלוח
-const remoteJsonUrl = 'https://docs.google.com/document/d/12bcJIg6WUSwJzMR1DxpQSWq63zyb8a_0sGPrEZE9YfE/edit?usp=drivesdk'; // <--- שים כאן את הכתובת המלאה
+const remoteJsonUrl = 'https://www.googleapis.com/drive/v3/files/1ojxPHpKj3qhwKMMxyJQswlhgK8fkPWr6?alt=media&key=AIzaSyDduW1Zbi2MIu8aMUMF6op72pJ1f0sPBi0'; // <--- שים כאן את הכתובת המלאה
 
 fetch(remoteJsonUrl)
     .then(res => {
