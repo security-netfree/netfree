@@ -146,19 +146,20 @@ const monthFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {month: "long"}
 const dayNumFormatter = new Intl.DateTimeFormat("he-u-ca-hebrew", {day: "numeric"});
 
 // 2. טעינת הנתונים ורק אז בניית הלוח
-fetch('letters.json')
+const remoteJsonUrl = 'https://docs.google.com/document/d/12bcJIg6WUSwJzMR1DxpQSWq63zyb8a_0sGPrEZE9YfE/edit?usp=drivesdk'; // <--- שים כאן את הכתובת המלאה
+
+fetch(remoteJsonUrl)
     .then(res => {
-        if (!res.ok) throw new Error("JSON not found");
+        if (!res.ok) throw new Error("לא מצליח למשוך את הקובץ מהשרת");
         return res.json();
     })
     .then(data => {
         lettersData = data;
-        console.log("נתונים נטענו:", lettersData);
-        init(); // קריאה לפונקציית האתחול
+        init(); 
     })
     .catch(err => {
-        console.log("עובד ללא קובץ חיצוני או שגיאת טעינה:", err);
-        init(); // בכל זאת נבנה את הלוח
+        console.error("שגיאה בטעינה מהשרת:", err);
+        init(); // טוען את הלוח ריק כדי שהדף לא ייתקע
     });
 
 function init() {
